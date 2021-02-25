@@ -90,6 +90,7 @@ export async function initORMMySql<D extends MySqlDriver | MariaDbDriver = MySql
 }
 
 export async function initORMPostgreSql(loadStrategy = LoadStrategy.SELECT_IN) {
+  const now = Date.now();
   const orm = await MikroORM.init<PostgreSqlDriver>({
     entities: [Author2, Address2, Book2, BookTag2, Publisher2, Test2, FooBar2, FooBaz2, FooParam2, Label2, Configuration2],
     dbName: `mikro_orm_test`,
@@ -103,11 +104,14 @@ export async function initORMPostgreSql(loadStrategy = LoadStrategy.SELECT_IN) {
     migrations: { path: BASE_DIR + '/../temp/migrations' },
     loadStrategy,
   });
+  console.log(Date.now() - now);
 
   const schemaGenerator = new SchemaGenerator(orm.em);
   await schemaGenerator.ensureDatabase();
+  console.log(Date.now() - now);
   const connection = orm.em.getConnection();
   await connection.loadFile(__dirname + '/postgre-schema.sql');
+  console.log(Date.now() - now);
   Author2Subscriber.log.length = 0;
   EverythingSubscriber.log.length = 0;
   FlushSubscriber.log.length = 0;
@@ -193,19 +197,33 @@ export async function wipeDatabaseMySql(em: SqlEntityManager) {
 }
 
 export async function wipeDatabasePostgreSql(em: SqlEntityManager) {
+  const now = Date.now();
   await em.getConnection().execute(`set session_replication_role = 'replica'`);
+  console.log(Date.now() - now);
   await em.createQueryBuilder(Author2).truncate().execute();
+  console.log(Date.now() - now);
   await em.createQueryBuilder(Book2).truncate().execute();
+  console.log(Date.now() - now);
   await em.createQueryBuilder(BookTag2).truncate().execute();
+  console.log(Date.now() - now);
   await em.createQueryBuilder(Publisher2).truncate().execute();
+  console.log(Date.now() - now);
   await em.createQueryBuilder(Test2).truncate().execute();
+  console.log(Date.now() - now);
   await em.createQueryBuilder(FooBar2).truncate().execute();
+  console.log(Date.now() - now);
   await em.createQueryBuilder(FooBaz2).truncate().execute();
+  console.log(Date.now() - now);
   await em.createQueryBuilder(FooParam2).truncate().execute();
+  console.log(Date.now() - now);
   await em.createQueryBuilder('book2_tags').truncate().execute();
+  console.log(Date.now() - now);
   await em.createQueryBuilder('book_to_tag_unordered').truncate().execute();
+  console.log(Date.now() - now);
   await em.createQueryBuilder('publisher2_tests').truncate().execute();
+  console.log(Date.now() - now);
   await em.getConnection().execute(`set session_replication_role = 'origin'`);
+  console.log(Date.now() - now);
   em.clear();
   Author2Subscriber.log.length = 0;
   EverythingSubscriber.log.length = 0;

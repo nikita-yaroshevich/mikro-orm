@@ -18,6 +18,21 @@ class IdentityMeta {
 }
 
 @Embeddable()
+class IdentityLink {
+
+  @Property({ nullable: true })
+  url?: string;
+
+  @Property({ nullable: true })
+  createdAt?: Date;
+
+  constructor(url: string) {
+    this.url = url;
+  }
+
+}
+
+@Embeddable()
 class Identity {
 
   @Property()
@@ -25,6 +40,9 @@ class Identity {
 
   @Embedded(() => IdentityMeta, { nullable: true })
   meta?: IdentityMeta;
+
+  @Embedded(() => IdentityLink, { array: true, nullable: true })
+  links: IdentityLink[] = [];
 
   constructor(email: string, meta?: IdentityMeta) {
     this.email = email;
@@ -72,7 +90,7 @@ describe('embedded entities in postgres', () => {
 
   beforeAll(async () => {
     orm = await MikroORM.init({
-      entities: [User, Profile, Identity, IdentityMeta],
+      entities: [User, Profile, Identity, IdentityMeta, IdentityLink],
       type: 'postgresql',
       dbName: `mikro_orm_test_nested_embedddables`,
     });
@@ -92,6 +110,7 @@ describe('embedded entities in postgres', () => {
   });
 
   test('diffing', async () => {
+    console.log(orm.getMetadata().get('User').properties);
     expect(orm.em.getComparator().getSnapshotGenerator('User').toString()).toMatchSnapshot();
   });
 
@@ -112,7 +131,7 @@ describe('embedded entities in postgres', () => {
     await orm.em.persistAndFlush([user1, user2]);
     orm.em.clear();
     expect(mock.mock.calls[0][0]).toMatch(`begin`);
-    expect(mock.mock.calls[1][0]).toMatch(`insert into "user" ("name", "profile1_username", "profile1_identity_email", "profile1_identity_meta_foo", "profile1_identity_meta_bar", "profile2") values ('Uwe', 'u1', 'e1', 'f1', 'b1', '{"username":"u2","identity":{"email":"e2","meta":{"foo":"f2","bar":"b2"}}}'), ('Uschi', 'u3', 'e3', NULL, NULL, '{"username":"u4","identity":{"email":"e4","meta":{"foo":"f4"}}}') returning "id"`);
+    expect(mock.mock.calls[1][0]).toMatch(`insert into "user" ("name", "profile1_username", "profile1_identity_email", "profile1_identity_meta_foo", "profile1_identity_meta_bar", "profile1_identity_links_foo", "profile1_identity_links_bar", "profile2") values ('Uwe', 'u1', 'e1', 'f1', 'b1', NULL, NULL, '{"username":"u2","identity":{"links":[],"email":"e2","meta":{"foo":"f2","bar":"b2"}}}'), ('Uschi', 'u3', 'e3', NULL, NULL, NULL, NULL, '{"username":"u4","identity":{"links":[],"email":"e4","meta":{"foo":"f4"}}}') returning "id"`);
     expect(mock.mock.calls[2][0]).toMatch(`commit`);
 
     const u1 = await orm.em.findOneOrFail(User, user1.id);

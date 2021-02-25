@@ -244,7 +244,7 @@ export class EntityComparator {
 
     if (prop.reference === ReferenceType.EMBEDDED) {
       if (prop.object) {
-        return ret + `    ret.${prop.name} = cloneEmbeddable({ ...entity.${prop.name} });\n  }\n`;
+        return ret + `    ret.${prop.name} = cloneEmbeddable(entity.${prop.name});\n  }\n`;
       }
 
       return this.getEmbeddedPropertySnapshot(meta, prop, context) + '\n';
